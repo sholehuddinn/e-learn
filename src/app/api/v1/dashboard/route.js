@@ -4,7 +4,7 @@ export async function GET(req) {
   try {
     const authHeader = req.headers.get("authorization");
     const cookie = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice(7) // buang "Bearer "
+      ? authHeader.slice(7) 
       : null;
 
     const bodyPayload = new URLSearchParams(urlSearchParam);
