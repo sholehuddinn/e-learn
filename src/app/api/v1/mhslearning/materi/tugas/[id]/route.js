@@ -1,4 +1,4 @@
-import urlSearchParam from "@/app/lib/urlSearchParams";
+import urlSearchParam from "@/lib/urlSearchParams";
 
 export async function GET(req, { params }) {
   try {

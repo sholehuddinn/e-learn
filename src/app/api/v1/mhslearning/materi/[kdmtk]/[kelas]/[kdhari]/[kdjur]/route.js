@@ -1,5 +1,3 @@
-// src/app/api/v1/mhslearning/table_materi/[kdmtk]/[kelas]/[kdhari]/[kdjur]/route.js
-
 export async function GET(req, { params }) {
   try {
     const { kdmtk, kelas, kdhari, kdjur } = await params;

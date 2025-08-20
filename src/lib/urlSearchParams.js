@@ -1,4 +1,3 @@
-// ini cuma object biasa
 const urlSearchParam = {
   draw: "1",
   "columns[0][data]": "no",
