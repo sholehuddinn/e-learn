@@ -1,28 +1,38 @@
 import urlSearchParam from "@/app/lib/urlSearchParams";
 
-export async function POST(req, { params }) {
+export async function GET(req, { params }) {
   try {
-    const { cookie } = await req.json();
-    const { id } = params;
+    const { id } = await params;
 
-    // bungkus jadi x-www-form-urlencoded
+    const authHeader = req.headers.get("authorization");
+    const cookie = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7) 
+      : null;
+
     const bodyPayload = new URLSearchParams(urlSearchParam);
 
     const res = await fetch(
-      `https://e-learning.unitomo.ac.id/tugas/table/${id}`,
+      `${process.env.URL_TARGET}/tugas/table/${id}`,
       {
         method: "POST",
         headers: {
           Accept: "application/json, text/javascript, */*; q=0.01",
           "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          Origin: "https://e-learning.unitomo.ac.id",
-          Referer: `https://e-learning.unitomo.ac.id/mhslearning/showmateri/${id}`,
-          "User-Agent": "Hayoo Cari Siapa",
-          Cookie: cookie,
+          Origin: process.env.URL_TARGET,
+          Referer: `${process.env.URL_TARGET}/mhslearning/showmateri/${id}`,
+          "User-Agent": process.env.USER_AGENT,
+          Cookie: cookie,   
         },
         body: bodyPayload.toString(),
       }
     );
+
+    if (!cookie) {
+      return Response.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     if (!res.ok) {
       return Response.json(
@@ -33,7 +43,7 @@ export async function POST(req, { params }) {
 
     const data = await res.json();
 
-    return Response.json({ message: "Success fetch tugas data", data });
+    return Response.json({ message: "Success fetch tugas data", ...data });
   } catch (err) {
     console.error("Materi API error:", err);
     return Response.json(

@@ -1,28 +1,37 @@
 import urlSearchParam from "@/app/lib/urlSearchParams";
 
-export async function POST(req) {
+export async function GET(req) {
   try {
-    const { cookie } = await req.json();
+    const authHeader = req.headers.get("authorization");
+    const cookie = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7) 
+      : null;
 
     // bungkus jadi x-www-form-urlencoded
     const bodyPayload = new URLSearchParams(urlSearchParam);
 
     const res = await fetch(
-      "https://e-learning.unitomo.ac.id/mhslearning/table",
+      `${process.env.URL_TARGET}/mhslearning/table`,
       {
         method: "POST",
         headers: {
           Accept: "application/json, text/javascript, */*; q=0.01",
           "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          Origin: "https://e-learning.unitomo.ac.id",
-          Referer: "https://e-learning.unitomo.ac.id/mhslearning",
-          "User-Agent":
-            "Hayoo Cari Siapa",
+          Origin: process.env.URL_TARGET,
+          Referer: `${process.env.URL_TARGET}/mhslearning`,
+          "User-Agent": process.env.USER_AGENT,
           Cookie: cookie,
         },
         body: bodyPayload.toString(),
       }
     );
+
+    if (!cookie) {
+      return Response.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     if (!res.ok) {
       return Response.json(
@@ -33,7 +42,7 @@ export async function POST(req) {
 
     const data = await res.json();
 
-    return Response.json({ message: "Welcome to the dashboard", data });
+    return Response.json({ message: "Welcome to the mahasiswa learning", ...data });
   } catch (err) {
     console.error("Dashboard API error:", err);
     return Response.json(

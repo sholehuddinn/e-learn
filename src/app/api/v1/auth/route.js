@@ -17,7 +17,7 @@ export async function POST(req) {
     const page = await browser.newPage();
 
     // buka halaman login
-    await page.goto("https://e-learning.unitomo.ac.id/login", {
+    await page.goto(`${process.env.URL_TARGET}/login`, {
       waitUntil: "domcontentloaded",
       timeout: 0,
     });
@@ -53,8 +53,11 @@ export async function POST(req) {
 
     return Response.json({
       message: "Authentication successful",
-      cookie: cookieHeader,
-      cookies,
+      token: cookieHeader,
+      user: {
+        nim: username
+      }
+      // cookies,
     });
   } catch (error) {
     console.error("Login error:", error);
