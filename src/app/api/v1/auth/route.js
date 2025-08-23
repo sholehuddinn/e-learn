@@ -2,6 +2,10 @@ export async function POST(req) {
   try {
     const { username, password } = await req.json();
 
+    if (!username || !password) {
+      return Response.json({ message: "Username dan password wajib diisi" }, { status: 400 });
+    }
+
     const res = await fetch(`${process.env.URL_TARGET}/login`, {
       method: "POST",
       headers: {

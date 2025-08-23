@@ -38,6 +38,35 @@ export default function LoginPage() {
   };
 
   const handleSubmit = async () => {
+
+    if (!formData.username.trim() || !formData.password.trim()) {
+      Swal.fire({
+        icon: "error",
+        title: "Missing Credentials",
+        text: "Please enter both username and password.",
+      });
+      return;
+    }
+
+    if (isNaN(formData.username)) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid Username",
+        text: "Username must be a number.",
+      });
+      return;
+    }
+
+
+    if (formData.password.length < 4) {
+      Swal.fire({
+        icon: "warning",
+        title: "Weak Password",
+        text: "Password must be at least 4 characters long.",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -53,7 +82,7 @@ export default function LoginPage() {
         const data = await response.json();
 
         // simpan token ke sessionStorage
-        sessionStorage.setItem("token", data.token);
+        sessionStorage.setItem("token_elearning", data.token);
 
         router.push("/dashboard");
 
