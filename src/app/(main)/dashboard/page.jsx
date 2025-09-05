@@ -1,15 +1,21 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Clock, MapPin, Users, Calendar, User, Bell, Search, Menu, X, Eye, FileText, LogOut, Home } from 'lucide-react';
+import { Search, Eye, FileText, Filter, BookOpen, Clock, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [courses, setCourses] = useState([]);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter()
 
   useEffect(() => {
     setMounted(true);
@@ -49,21 +55,11 @@ export default function DashboardPage() {
   };
 
   const handleMateriClick = (course) => {
-    const url = `/materi/${course.kdmtk}/${course.kelas}/${course.kdhari}/${course.kdjur}`;
-    console.log('Navigate to materi:', url);
-    // Handle navigation to materi page
+    router.push(`/dashboard/materi/${course.kdmtk}/${course.kelas}/${course.kdhari}/${course.kdjur}`)
   };
 
   const handleUjianClick = (course) => {
-    const url = `/ujian/${course.kdmtk}`;
-    console.log('Navigate to ujian:', url);
-    // Handle navigation to ujian page
-  };
-
-  const handleLogout = () => {
-    sessionStorage.removeItem('token_elearning');
-    console.log('Logout and redirect to login');
-    // Handle logout
+    router.push(`/dashboard/ujian/${course.kdmtk}`)
   };
 
   const filteredCourses = courses.filter(course =>
@@ -71,266 +67,238 @@ export default function DashboardPage() {
     course.kdmtk?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getStatusColor = (status) => {
-    return status === 'Sudah' ? 'text-green-600' : 'text-yellow-600';
-  };
-
-  const getStatusBg = (status) => {
-    return status === 'Sudah' ? 'bg-green-100 border-green-300' : 'bg-yellow-100 border-yellow-300';
-  };
+  const TableRowSkeleton = () => (
+    <tr className="border-b border-gray-100">
+      <td className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
+      <td className="px-6 py-4"><Skeleton className="h-4 w-48" /></td>
+      <td className="px-6 py-4"><Skeleton className="h-4 w-16" /></td>
+      <td className="px-6 py-4"><Skeleton className="h-4 w-24" /></td>
+      <td className="px-6 py-4 space-x-2">
+        <Skeleton className="h-8 w-20 inline-block" />
+        <Skeleton className="h-8 w-24 inline-block" />
+      </td>
+    </tr>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      {/* Animated Background */}
-      <div className="absolute inset-0">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200/40 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-pulse"></div>
-        <div className="absolute top-60 right-20 w-72 h-72 bg-purple-200/40 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-pulse animation-delay-2000"></div>
-        <div className="absolute -bottom-32 left-40 w-72 h-72 bg-indigo-200/40 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-pulse animation-delay-4000"></div>
-      </div>
-
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 backdrop-blur-lg bg-white/95 border-r border-gray-200/80 shadow-xl transform transition-transform duration-300 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:translate-x-0`}>
-        <div className="flex items-center justify-between p-6 border-b border-gray-200/80">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <BookOpen className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-800">E-Learning</h1>
-              <p className="text-xs text-gray-500">Unitomo</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-gray-600 hover:text-gray-800"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        <nav className="p-4 space-y-2">
-          <div className="text-xs uppercase text-gray-400 font-semibold mb-4">Menu Utama</div>
-          <a href="#" className="flex items-center space-x-3 px-4 py-3 rounded-xl bg-blue-100 text-blue-600 border border-blue-200 shadow-sm">
-            <Home className="w-5 h-5" />
-            <span className="font-medium">Dashboard</span>
-          </a>
-          <a href="#" className="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors">
-            <BookOpen className="w-5 h-5" />
-            <span>Semua Materi</span>
-          </a>
-          <a href="#" className="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors">
-            <FileText className="w-5 h-5" />
-            <span>Ujian & Tugas</span>
-          </a>
-          <a href="#" className="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors">
-            <User className="w-5 h-5" />
-            <span>Profil</span>
-          </a>
-        </nav>
-
-        <div className="absolute bottom-4 left-4 right-4">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors border border-red-200"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Logout</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="lg:ml-64 relative z-10">
+    <div className="min-h-screen bg-gray-50">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <header className="backdrop-blur-lg bg-white/80 border-b border-gray-200/80 shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden text-gray-600 hover:text-gray-800"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-              <div>
-                <h1 className="text-xl font-bold text-gray-800">Dashboard Mahasiswa</h1>
-                <p className="text-sm text-gray-500">Selamat datang kembali!</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-500 hover:text-gray-700 transition-colors">
-                <Bell className="w-6 h-6" />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
-                <User className="w-4 h-4 text-white" />
-              </div>
-            </div>
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-xl mb-4">
+            <BookOpen className="w-8 h-8 text-blue-600" />
           </div>
-        </header>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            Dashboard Mahasiswa
+          </h1>
+          <p className="text-gray-600 text-lg max-w-xl mx-auto">
+            Kelola mata kuliah dan tugas Anda dengan mudah dan efisien
+          </p>
+        </div>
 
-        {/* Content */}
-        <main className="p-6">
-          {/* Search Bar */}
-          <div className="mb-8">
-            <div className="relative max-w-md">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Cari mata kuliah..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-800 placeholder-gray-400 shadow-sm"
-              />
-            </div>
+        {/* Search Section */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Cari mata kuliah..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-11 border-gray-200 focus:border-blue-300 focus:ring-blue-200"
+            />
           </div>
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline"
+              className="h-11 px-6 border-gray-200 hover:bg-gray-50"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filter
+            </Button>
+            <Button 
+              onClick={() => fetchCourses(true)}
+              variant="outline"
+              className="h-11 px-4 border-blue-200 text-blue-700 hover:bg-blue-50"
+              title="Refresh data"
+            >
+              🔄
+            </Button>
+          </div>
+        </div>
 
-          {/* Loading State */}
-          {loading && (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-              </div>
-              <p className="text-gray-600">Memuat data mata kuliah...</p>
-            </div>
-          )}
-
-          {/* Error State */}
-          {error && (
-            <div className="backdrop-blur-lg bg-red-50 border border-red-200 rounded-2xl p-6 mb-6 shadow-sm">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <X className="w-6 h-6 text-red-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-red-700">Terjadi Kesalahan</h3>
-                  <p className="text-red-600">{error}</p>
-                </div>
-              </div>
-              <button
+        {error && (
+          <Alert className="mb-8 border-red-200 bg-red-50">
+            <AlertDescription className="text-red-700">
+              <strong>Terjadi Kesalahan:</strong> {error}
+              <Button 
                 onClick={fetchCourses}
-                className="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
+                variant="outline"
+                size="sm"
+                className="ml-4 text-red-700 border-red-300 hover:bg-red-100"
               >
                 Coba Lagi
-              </button>
-            </div>
-          )}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
-          {/* Courses Grid */}
-          {!loading && !error && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  Mata Kuliah Anda ({filteredCourses.length})
-                </h2>
-              </div>
-
-              {filteredCourses.length === 0 ? (
-                <div className="text-center py-12">
-                  <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-600 mb-2">Tidak ada mata kuliah</h3>
-                  <p className="text-gray-500">
-                    {searchTerm ? 'Tidak ada mata kuliah yang sesuai dengan pencarian Anda.' : 'Anda belum terdaftar di mata kuliah manapun.'}
+        {/* Table Container */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          {/* Table Header */}
+          <div className="px-6 py-5 border-b border-gray-100 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    {loading ? 'Memuat Data...' : 'Daftar Mata Kuliah'}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {!loading && `${filteredCourses.length} mata kuliah tersedia`}
                   </p>
                 </div>
-              ) : (
-                <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredCourses.map((course, index) => (
-                    <div
-                      key={course.kdmtk + course.kelas}
-                      className={`backdrop-blur-lg bg-white/80 rounded-2xl border border-gray-200 p-6 transition-all duration-500 hover:scale-105 hover:bg-white/90 hover:shadow-xl group shadow-lg ${
-                        mounted ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
-                      }`}
-                      style={{ transitionDelay: `${index * 100}ms` }}
-                    >
-                      {/* Course Header */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2">
-                            {course.namamtk?.trim()}
-                          </h3>
-                          <div className="flex items-center space-x-4 text-sm text-gray-600">
-                            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-lg border border-blue-200 font-medium">
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Kode MK
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Nama Mata Kuliah
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-4 h-4" />
+                      <span>Hari</span>
+                    </div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <div className="flex items-center space-x-2">
+                      <Clock className="w-4 h-4" />
+                      <span>Jam</span>
+                    </div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Aksi
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {loading && (
+                  <>
+                    {[...Array(6)].map((_, index) => (
+                      <TableRowSkeleton key={index} />
+                    ))}
+                  </>
+                )}
+
+                {!loading && !error && filteredCourses.length === 0 && (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-16 text-center">
+                      <div className="flex flex-col items-center">
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                          <Search className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          {searchTerm ? 'Tidak ada hasil' : 'Belum ada mata kuliah'}
+                        </h3>
+                        <p className="text-gray-500 mb-4">
+                          {searchTerm 
+                            ? 'Coba gunakan kata kunci lain' 
+                            : 'Hubungi admin untuk mendaftarkan mata kuliah'}
+                        </p>
+                        {searchTerm && (
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setSearchTerm('')}
+                          >
+                            Reset Pencarian
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+
+                {!loading && !error && filteredCourses.length > 0 && (
+                  <>
+                    {filteredCourses.map((course, index) => (
+                      <tr 
+                        key={`${course.kdmtk}-${course.kelas}`}
+                        className={`hover:bg-gray-50 transition-colors duration-200 ${
+                          mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+                        }`}
+                        style={{ 
+                          transitionDelay: `${index * 50}ms`,
+                          transition: 'all 0.3s ease-out'
+                        }}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <span className="text-blue-600 font-semibold text-xs">
+                                {course.kdmtk?.slice(0, 2)}
+                              </span>
+                            </div>
+                            <span className="text-sm font-medium text-gray-900">
                               {course.kdmtk}
                             </span>
-                            <span className="font-medium">Kelas {course.kelas}</span>
                           </div>
-                        </div>
-                        <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusBg(course.status)} ${getStatusColor(course.status)}`}>
-                          {course.status}
-                        </div>
-                      </div>
-
-                      {/* Course Details */}
-                      <div className="space-y-3 mb-6">
-                        <div className="flex items-center space-x-3 text-gray-700">
-                          <Calendar className="w-4 h-4 text-blue-600" />
-                          <span className="text-sm font-medium">{course.hari}</span>
-                          <Clock className="w-4 h-4 text-purple-600 ml-2" />
-                          <span className="text-sm">{course.jam}</span>
-                        </div>
-                        <div className="flex items-center space-x-3 text-gray-700">
-                          <MapPin className="w-4 h-4 text-green-600" />
-                          <span className="text-sm">Ruang {course.kdruang}</span>
-                          <Users className="w-4 h-4 text-orange-600 ml-2" />
-                          <span className="text-sm font-medium">{course.sks} SKS</span>
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="space-y-3">
-                        <button
-                          onClick={() => handleMateriClick(course)}
-                          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 px-4 rounded-xl font-medium transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl group/btn"
-                        >
-                          <div className="flex items-center justify-center">
-                            <Eye className="w-4 h-4 mr-2 group-hover/btn:scale-110 transition-transform" />
-                            Lihat Materi
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {course.namamtk?.trim()}
                           </div>
-                        </button>
-                        <button
-                          onClick={() => handleUjianClick(course)}
-                          className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white py-3 px-4 rounded-xl font-medium transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl group/btn"
-                        >
-                          <div className="flex items-center justify-center">
-                            <FileText className="w-4 h-4 mr-2 group-hover/btn:scale-110 transition-transform" />
-                            Ujian & Tugas
+                        </td>
+                        <td className="px-6 py-4">
+                          <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100">
+                            {course.hari}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <Clock className="w-4 h-4 text-gray-400" />
+                            <span>{course.jam}</span>
                           </div>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </main>
-      </div>
-
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/20 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-      )}
-
-      <style jsx>{`
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        .line-clamp-2 {
-          overflow: hidden;
-          display: -webkit-box;
-          -webkit-box-orient: vertical;
-          -webkit-line-clamp: 2;
-        }
-      `}</style>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex space-x-2">
+                            <Button 
+                              onClick={() => handleUjianClick(course)}
+                              size="sm"
+                              variant="outline"
+                              className="border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
+                            >
+                              <FileText className="w-4 h-4 mr-1" />
+                              Ujian
+                            </Button>
+                            <Button 
+                              onClick={() => handleMateriClick(course)}
+                              size="sm"
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              Detail
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
