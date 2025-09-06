@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
+import { useExam } from '@/context/ExamContext';
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
@@ -16,6 +17,8 @@ export default function DashboardPage() {
   const [courses, setCourses] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter()
+
+  const { exams } = useExam()
 
   useEffect(() => {
     setMounted(true);
@@ -66,6 +69,12 @@ export default function DashboardPage() {
     course.namamtk?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     course.kdmtk?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  function countUjian(kdmtk, exams) {
+    if (!kdmtk || !Array.isArray(exams)) return 0;
+    return exams.filter(exam => exam.kdmtk?.trim() === kdmtk?.trim()).length;
+  }
+
 
   const TableRowSkeleton = () => (
     <tr className="border-b border-gray-100">
@@ -175,6 +184,9 @@ export default function DashboardPage() {
                     Nama Mata Kuliah
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    SKS
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4" />
                       <span>Hari</span>
@@ -185,6 +197,11 @@ export default function DashboardPage() {
                       <Clock className="w-4 h-4" />
                       <span>Jam</span>
                     </div>
+                  </th>
+                  <th
+                    className="px-6 py-4  text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                  >
+                    Ruang
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Aksi
@@ -259,6 +276,11 @@ export default function DashboardPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {course.sks}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
                           <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100">
                             {course.hari}
                           </Badge>
@@ -270,15 +292,26 @@ export default function DashboardPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
+                          <div className="text-sm text-gray-600">
+                            {course.kdruang || '-'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
                           <div className="flex space-x-2">
-                            <Button 
+                            <Button
                               onClick={() => handleUjianClick(course)}
                               size="sm"
                               variant="outline"
-                              className="border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
+                              className="relative border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
                             >
                               <FileText className="w-4 h-4 mr-1" />
                               Ujian
+                                <Badge
+                                  className="ml-2 bg-purple-600 text-white rounded-full px-2 py-0.5 text-xs"
+                                  variant="secondary"
+                                >
+                                  {countUjian(course.kdmtk, exams)}
+                                </Badge>
                             </Button>
                             <Button 
                               onClick={() => handleMateriClick(course)}

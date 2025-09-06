@@ -1,10 +1,8 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useMemo } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { 
-  Search, 
-  RefreshCw, 
   Calendar, 
   Clock, 
   BookOpen, 
@@ -12,15 +10,19 @@ import {
   FileText,
   ExternalLink,
   AlertCircle,
-  Loader2
-} from 'lucide-react';
+  Loader2,
+  ArrowLeft
+} from "lucide-react";
+
+import { useExam } from "@/context/ExamContext"; // <-- pakai context
+
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -29,112 +31,39 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import {
-  Badge
-} from '@/components/ui/badge';
-import {
-  Button
-} from '@/components/ui/button';
-import {
-  Input
-} from '@/components/ui/input';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from '@/components/ui/alert';
+} from "@/components/ui/alert";
 
 const DaftarUjian = () => {
-  const [examData, setExamData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedKdmtk, setSelectedKdmtk] = useState('');
-  const [isFiltering, setIsFiltering] = useState(false);
+  const { exams } = useExam(); // ✅ ambil dari global state
   const params = useParams();
+  const router = useRouter();
   const kdmtk = params?.id;
 
-  // Fungsi untuk fetch data dari API
-  const fetchExamData = async (filterKdmtk = '') => {
-    try {
-      setLoading(filterKdmtk === '' ? true : false);
-      setIsFiltering(filterKdmtk !== '' ? true : false);
-      setError(null);
-
-      const token = sessionStorage.getItem('token_elearning');
-      
-      const response = await fetch('/api/v1/dashboard', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Gagal mengambil data ujian');
-      }
-      
-      const result = await response.json();
-      
-      // Filter data berdasarkan kdmtk dari URL atau input filter
-      let filteredData = result.data || [];
-      const targetKdmtk = filterKdmtk || kdmtk;
-      
-      if (targetKdmtk) {
-        filteredData = filteredData.filter(item => 
-          item.kdmtk && item.kdmtk.toLowerCase() === targetKdmtk.toLowerCase()
-        );
-      }
-      
-      setExamData(filteredData);
-    } catch (err) {
-      setError(err.message);
-      console.error('Error fetching exam data:', err);
-    } finally {
-      setLoading(false);
-      setIsFiltering(false);
-    }
-  };
-
-  // Effect untuk fetch data saat komponen dimount atau kdmtk berubah
-  useEffect(() => {
-    if (kdmtk) {
-      setSelectedKdmtk(kdmtk);
-      fetchExamData();
-    } else {
-      fetchExamData();
-    }
-  }, [kdmtk]);
-
-  // Handler untuk filter berdasarkan kode mata kuliah
-  const handleFilterByKdmtk = () => {
-    fetchExamData(selectedKdmtk);
-  };
-
-  // Handler untuk reset filter
-  const handleResetFilter = () => {
-    setSelectedKdmtk('');
-    fetchExamData();
-  };
-
-  // Handler untuk enter key pada input
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleFilterByKdmtk();
-    }
-  };
+  // filter exam berdasarkan kdmtk dari url
+  const examData = useMemo(() => {
+    if (!kdmtk) return exams;
+    return exams.filter(
+      (item) => item.kdmtk?.toLowerCase() === kdmtk.toLowerCase()
+    );
+  }, [exams, kdmtk]);
 
   // Fungsi untuk format tanggal
   const formatDate = (dateString) => {
-    if (!dateString) return '-';
+    if (!dateString) return "-";
     const date = new Date(dateString);
-    return date.toLocaleString('id-ID', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return date.toLocaleString("id-ID", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -142,13 +71,13 @@ const DaftarUjian = () => {
   const renderExamStatus = (item) => {
     if (!item.id_ujian) {
       return (
-        <Badge variant="destructive" className="flex items-center gap-1">
+        <Badge variant="destructive" className="items-center">
           <AlertCircle className="h-3 w-3" />
           Jadwal Belum Ada
         </Badge>
       );
     }
-    
+
     return (
       <Button
         asChild
@@ -169,8 +98,8 @@ const DaftarUjian = () => {
     );
   };
 
-  // Render loading state
-  if (loading) {
+  // Loading state kalau context masih kosong (belum fetch)
+  if (!exams) {
     return (
       <div className="container mx-auto p-6">
         <Card>
@@ -183,44 +112,25 @@ const DaftarUjian = () => {
     );
   }
 
-  // Render error state
-  if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Terjadi Kesalahan!</AlertTitle>
-          <AlertDescription className="mt-2">
-            {error}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fetchExamData()}
-              className="mt-3 ml-0"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Coba Lagi
-            </Button>
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Daftar Ujian</h1>
-        <p className="text-muted-foreground">
-          {kdmtk 
-            ? `Ujian untuk mata kuliah: ${kdmtk}` 
-            : 'Kelola dan pantau jadwal ujian mata kuliah Anda'
-          }
-        </p>
+      {/* Header dengan tombol kembali */}
+      <div className="flex flex-col space-y-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.back()}
+            className="flex items-center gap-2 br"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Kembali
+          </Button>
+          <div className="flex flex-col">
+            <h1 className="text-3xl font-bold tracking-tight">Daftar Ujian</h1>
+          </div>
+        </div>
       </div>
-
-      
 
       {/* Main Content Card */}
       <Card>
@@ -229,12 +139,9 @@ const DaftarUjian = () => {
             <div>
               <CardTitle>Data Ujian</CardTitle>
               <CardDescription>
-                {kdmtk 
-                  ? `Ujian untuk mata kuliah ${kdmtk}` 
-                  : selectedKdmtk 
-                    ? `Hasil untuk kode mata kuliah: ${selectedKdmtk}` 
-                    : 'Semua data ujian yang tersedia'
-                }
+                {kdmtk
+                  ? `Ujian untuk mata kuliah ${kdmtk}`
+                  : "Semua data ujian yang tersedia"}
               </CardDescription>
             </div>
             <Badge variant="secondary" className="flex items-center gap-1">
@@ -248,20 +155,11 @@ const DaftarUjian = () => {
             <div className="text-center py-12">
               <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">Tidak Ada Data</h3>
-              <p className="text-muted-foreground mb-4">
-                {kdmtk 
-                  ? `Tidak ada data ujian untuk mata kuliah: ${kdmtk}` 
-                  : selectedKdmtk 
-                    ? `Tidak ada data ujian untuk kode mata kuliah: ${selectedKdmtk}` 
-                    : 'Tidak ada data ujian tersedia saat ini'
-                }
+              <p className="text-muted-foreground">
+                {kdmtk
+                  ? `Tidak ada data ujian untuk mata kuliah: ${kdmtk}`
+                  : "Tidak ada data ujian tersedia saat ini"}
               </p>
-              {(selectedKdmtk || kdmtk) && !kdmtk && (
-                <Button variant="outline" onClick={handleResetFilter}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Tampilkan Semua Data
-                </Button>
-              )}
             </div>
           ) : (
             <div className="rounded-md border overflow-hidden">
@@ -301,42 +199,30 @@ const DaftarUjian = () => {
                 <TableBody>
                   {examData.map((item, index) => (
                     <TableRow key={`${item.kdmtk}-${item.id_ujian}-${index}`} className="hover:bg-muted/50">
-                      <TableCell className="text-center font-medium">
-                        {index + 1}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {item.namamtk || '-'}
-                      </TableCell>
+                      <TableCell className="text-center font-medium">{index + 1}</TableCell>
+                      <TableCell className="font-medium">{item.namamtk || "-"}</TableCell>
                       <TableCell className="text-center">
                         {item.kdmtk ? (
                           <Badge variant="secondary" className="font-mono">
                             {item.kdmtk}
                           </Badge>
-                        ) : '-'}
+                        ) : "-"}
                       </TableCell>
                       <TableCell className="text-center">
-                        {item.kelas ? (
-                          <Badge variant="outline">
-                            {item.kelas}
-                          </Badge>
-                        ) : '-'}
+                        {item.kelas ? <Badge variant="outline">{item.kelas}</Badge> : "-"}
                       </TableCell>
                       <TableCell className="text-center">
                         {item.nama_tipe_ujian ? (
                           <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200">
                             {item.nama_tipe_ujian}
                           </Badge>
-                        ) : '-'}
+                        ) : "-"}
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm">
-                          {formatDate(item.tgl_mulai)}
-                        </span>
+                        <span className="text-sm">{formatDate(item.tgl_mulai)}</span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm">
-                          {formatDate(item.tgl_selesai)}
-                        </span>
+                        <span className="text-sm">{formatDate(item.tgl_selesai)}</span>
                       </TableCell>
                       <TableCell className="text-center">
                         {renderExamStatus(item)}
@@ -348,7 +234,7 @@ const DaftarUjian = () => {
                   <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                     <BookOpen className="h-4 w-4" />
                     Menampilkan {examData.length} dari total data ujian
-                    {(kdmtk || selectedKdmtk) && ` (difilter berdasarkan: ${kdmtk || selectedKdmtk})`}
+                    {kdmtk && ` (difilter berdasarkan: ${kdmtk})`}
                   </div>
                 </TableCaption>
               </Table>
