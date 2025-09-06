@@ -1,22 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { 
-  BookOpen, 
-  Calendar, 
-  Clock, 
-  User, 
-  FileText,
-  MessageSquare,
-  ExternalLink,
-  ArrowLeft,
-  Loader2,
-  Download,
-  Eye,
-  AlertCircle
-} from "lucide-react";
-
+import { useMateri } from "@/context/MateriContext";
 import {
   Card,
   CardContent,
@@ -35,63 +21,37 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+  BookOpen,
+  Calendar,
+  ArrowLeft,
+  Loader2,
+  AlertCircle,
+  MessageSquare,
+  ExternalLink,
+  Eye,
+} from "lucide-react";
 import Link from "next/link";
 
 const MateriPage = () => {
-  const [materiData, setMateriData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  const params = useParams();
+  const { kdmtk, kelas, kdhari, kdjur } = useParams();
   const router = useRouter();
-  
-  const { kdmtk, kelas, kdhari, kdjur } = params;
 
-  // Fetch data materi
-  const fetchMateriData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const token = sessionStorage.getItem('token_elearning');
-      
-      const response = await fetch(`/api/v1/mhslearning/materi/${kdmtk}/${kelas}/${kdhari}/${kdjur}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setMateriData(data);
-    } catch (err) {
-      setError(err.message);
-      console.error("Error fetching materi data:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { materiData, loading, error, fetchMateri } = useMateri();
 
   useEffect(() => {
     if (kdmtk && kelas && kdhari && kdjur) {
-      fetchMateriData();
+      fetchMateri({ kdmtk, kelas, kdhari, kdjur });
     }
   }, [kdmtk, kelas, kdhari, kdjur]);
 
-  // Format tanggal
+  const data = materiData?.data || [];
+  console.log("Materi Data:", data);
+
   const formatDate = (dateString) => {
     if (!dateString) return "-";
-    const date = new Date(dateString);
-    return date.toLocaleString("id-ID", {
+    return new Date(dateString).toLocaleString("id-ID", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -100,49 +60,39 @@ const MateriPage = () => {
     });
   };
 
-  // Render action buttons
-  const renderActionButtons = (item) => {
-    return (
-      <div className="flex flex-col sm:flex-row gap-2 justify-center">
-        <Button
-          asChild
-          size="sm"
-          className="bg-green-600 hover:bg-green-700 text-white"
+  const renderActionButtons = (item) => (
+    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+      <Button
+        asChild
+        size="sm"
+        className="bg-green-600 hover:bg-green-700 text-white"
+      >
+        <Link
+          href={`/dashboard/materi/show/${item.id_materi}`}
+          className="flex items-center gap-2"
         >
-          <Link
-            href={`/dashboard/materi/tugas/${item.id_materi}`}
-            className="flex items-center gap-2"
-          >
-            <Eye className="h-3 w-3" />
-            Lihat
-            <ExternalLink className="h-3 w-3" />
-          </Link>
-        </Button>
-        
-        <Button
-          asChild
-          size="sm"
-          variant="outline"
-          className="border-orange-300 text-orange-700 hover:bg-orange-50"
+          <Eye className="h-3 w-3" /> Lihat <ExternalLink className="h-3 w-3" />
+        </Link>
+      </Button>
+      <Button
+        asChild
+        size="sm"
+        variant="outline"
+        className="border-orange-300 text-orange-700 hover:bg-orange-50"
+      >
+        <a
+          href={`https://e-learning.unitomo.ac.id/forum/materi/${item.id_materi}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2"
         >
-          <a
-            href={`https://e-learning.unitomo.ac.id/forum/materi/${item.id_materi}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2"
-          >
-            <MessageSquare className="h-3 w-3" />
-            Forum
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        </Button>
-      </div>
-    );
-  };
+          <MessageSquare className="h-3 w-3" /> Forum{" "}
+          <ExternalLink className="h-3 w-3" />
+        </a>
+      </Button>
+    </div>
+  );
 
-  
-
-  // Loading state
   if (loading) {
     return (
       <div className="container mx-auto p-6">
@@ -156,26 +106,20 @@ const MateriPage = () => {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="container mx-auto p-6">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            Gagal memuat data materi: {error}
-          </AlertDescription>
+          <AlertDescription>Gagal memuat data materi: {error}</AlertDescription>
         </Alert>
       </div>
     );
   }
 
-  const data = materiData?.data || [];
-  
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* Header dengan tombol kembali */}
       <div className="flex flex-col space-y-4">
         <div className="flex items-center gap-4">
           <Button
@@ -184,19 +128,14 @@ const MateriPage = () => {
             onClick={() => router.back()}
             className="flex items-center gap-2"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Kembali
+            <ArrowLeft className="h-4 w-4" /> Kembali
           </Button>
-          <div className="flex flex-col">
-            <h1 className="text-3xl font-bold tracking-tight">Materi Pembelajaran</h1>
-          </div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Materi Pembelajaran
+          </h1>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      
-
-      {/* Main Content Card */}
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -207,8 +146,7 @@ const MateriPage = () => {
               </CardDescription>
             </div>
             <Badge variant="secondary" className="flex items-center gap-1">
-              <BookOpen className="h-3 w-3" />
-              {data.length} Pertemuan
+              <BookOpen className="h-3 w-3" /> {data.length} Pertemuan
             </Badge>
           </div>
         </CardHeader>
@@ -231,14 +169,12 @@ const MateriPage = () => {
                     </TableHead>
                     <TableHead className="font-semibold min-w-[200px]">
                       <div className="flex items-center gap-2">
-                        <BookOpen className="h-4 w-4" />
-                        Judul Materi
+                        <BookOpen className="h-4 w-4" /> Judul Materi
                       </div>
                     </TableHead>
                     <TableHead className="font-semibold">
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        Dibuat
+                        <Calendar className="h-4 w-4" /> Dibuat
                       </div>
                     </TableHead>
                     <TableHead className="text-center font-semibold min-w-[150px]">
@@ -248,8 +184,8 @@ const MateriPage = () => {
                 </TableHeader>
                 <TableBody>
                   {data.map((item, index) => (
-                    <TableRow 
-                      key={item.id_materi || index} 
+                    <TableRow
+                      key={item.id_materi || index}
                       className="hover:bg-muted/50"
                     >
                       <TableCell className="text-center">
@@ -258,13 +194,12 @@ const MateriPage = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium">
-                        <div className="space-y-1">
-                          <div className="font-semibold">{item.judul || "-"}</div>
-                        </div>
+                        {item.judul || "-"}
                       </TableCell>
-                      
                       <TableCell>
-                        <span className="text-sm">{formatDate(item.created_on)}</span>
+                        <span className="text-sm">
+                          {formatDate(item.created_on)}
+                        </span>
                         {item.edited_on && (
                           <div className="text-xs text-muted-foreground">
                             Edit: {formatDate(item.edited_on)}
@@ -279,8 +214,8 @@ const MateriPage = () => {
                 </TableBody>
                 <TableCaption className="mt-4">
                   <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                    <BookOpen className="h-4 w-4" />
-                    Menampilkan {data.length} materi pembelajaran
+                    <BookOpen className="h-4 w-4" /> Menampilkan {data.length}{" "}
+                    materi pembelajaran
                   </div>
                 </TableCaption>
               </Table>

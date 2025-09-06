@@ -190,7 +190,7 @@ export default function DashboardPage() {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Kode MK
+                    Kelas - Kode MK
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Nama Mata Kuliah
@@ -274,7 +274,7 @@ export default function DashboardPage() {
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                               <span className="text-blue-600 font-semibold text-xs">
-                                {course.kdmtk?.slice(0, 2)}
+                                {course.kelas}
                               </span>
                             </div>
                             <span className="text-sm font-medium text-gray-900">

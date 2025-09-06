@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { ExamProvider } from "@/context/ExamContext";
+import { MateriProvider } from "@/context/MateriContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,7 +25,9 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ExamProvider>
-          {children}
+          <MateriProvider>
+            {children}
+          </MateriProvider>
         </ExamProvider>
       </body>
     </html>
