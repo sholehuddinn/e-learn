@@ -75,6 +75,10 @@ export default function DashboardPage() {
     return exams.filter(exam => exam.kdmtk?.trim() === kdmtk?.trim()).length;
   }
 
+  const handleLogOut = () => {
+    sessionStorage.removeItem('token_elearning');
+    router.push('/login');
+  }
 
   const TableRowSkeleton = () => (
     <tr className="border-b border-gray-100">
@@ -132,6 +136,14 @@ export default function DashboardPage() {
               title="Refresh data"
             >
               🔄
+            </Button>
+            <Button 
+              onClick={handleLogOut}
+              variant="ghost"
+              className="h-11 px-4 bg-red-500 text-white hover:bg-red-50"
+              title="Logout"
+            >
+              Logout
             </Button>
           </div>
         </div>
