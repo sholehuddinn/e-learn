@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMateri } from "@/context/MateriContext";
 import {
@@ -31,12 +31,15 @@ import {
   MessageSquare,
   ExternalLink,
   Eye,
+  UserCheck,
 } from "lucide-react";
 import Link from "next/link";
+import Swal from "sweetalert2";
 
 const MateriPage = () => {
   const { kdmtk, kelas, kdhari, kdjur } = useParams();
   const router = useRouter();
+  const [absenLoading, setAbsenLoading] = useState({});
 
   const { materiData, loading, error, fetchMateri } = useMateri();
 
@@ -60,38 +63,123 @@ const MateriPage = () => {
     });
   };
 
-  const renderActionButtons = (item) => (
-    <div className="flex flex-col sm:flex-row gap-2 justify-center">
-      <Button
-        asChild
-        size="sm"
-        className="bg-green-600 hover:bg-green-700 text-white"
-      >
-        <Link
-          href={`/dashboard/materi/show/${item.id_materi}`}
-          className="flex items-center gap-2"
-        >
-          <Eye className="h-3 w-3" /> Lihat <ExternalLink className="h-3 w-3" />
-        </Link>
-      </Button>
-      <Button
-        asChild
-        size="sm"
-        variant="outline"
-        className="border-orange-300 text-orange-700 hover:bg-orange-50"
-      >
-        <a
-          href={`https://e-learning.unitomo.ac.id/forum/materi/${item.id_materi}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2"
-        >
-          <MessageSquare className="h-3 w-3" /> Forum{" "}
-          <ExternalLink className="h-3 w-3" />
-        </a>
-      </Button>
-    </div>
-  );
+  const handleAbsen = async (id_materi) => {
+    try {
+      setAbsenLoading((prev) => ({ ...prev, [id_materi]: true }));
+      const token = sessionStorage.getItem("token_elearning");
+
+      const formData = new FormData();
+      formData.append("kdmtk", kdmtk);
+      formData.append("kelas", kelas);
+      formData.append("id_materi", id_materi);
+
+      const res = await fetch("/api/v1/mhslearning/absen", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`, 
+        },
+        body: formData,
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Absen Berhasil",
+          text: "Kamu berhasil bergabung di pertemuan ini.",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        fetchMateri({ kdmtk, kelas, kdhari, kdjur });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Gagal Absen",
+          text: result.message || "Terjadi kesalahan.",
+        });
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.message,
+      });
+    } finally {
+      setAbsenLoading((prev) => ({ ...prev, [id_materi]: false }));
+    }
+  };
+
+  const renderActionButtons = (item) => {
+    const isAttended = item.count === "1";
+    const isAbsenLoading = absenLoading[item.id_materi];
+
+    if (isAttended) {
+      // Sudah absen - tampilkan tombol Lihat dan Forum
+      return (
+        <div className="flex flex-col sm:flex-row gap-2 justify-center">
+          <Button
+            asChild
+            size="sm"
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            <Link
+              href={`/dashboard/materi/show/${item.id_materi}`}
+              className="flex items-center gap-2"
+            >
+              <Eye className="h-3 w-3" /> Lihat{" "}
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </Button>
+        </div>
+      );
+    } else {
+      // Belum absen - tampilkan tombol Gabung Kelas
+      return (
+        <div className="flex justify-center">
+          <Button
+            onClick={() => handleAbsen(item.id_materi)}
+            disabled={isAbsenLoading}
+            size="sm"
+            className="bg-yellow-600 hover:bg-yellow-700 text-white"
+          >
+            {isAbsenLoading ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                Loading...
+              </>
+            ) : (
+              <>
+                <UserCheck className="h-3 w-3 mr-2" />
+                Gabung Kelas
+              </>
+            )}
+          </Button>
+        </div>
+      );
+    }
+  };
+
+  const getStatusBadge = (item) => {
+    const isAttended = item.count === "1";
+
+    if (isAttended) {
+      return (
+        <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+          <UserCheck className="h-3 w-3 mr-1" />
+          Sudah Gabung
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Belum Gabung
+        </Badge>
+      );
+    }
+  };
 
   if (loading) {
     return (
@@ -172,12 +260,15 @@ const MateriPage = () => {
                         <BookOpen className="h-4 w-4" /> Judul Materi
                       </div>
                     </TableHead>
+                    <TableHead className="font-semibold text-center">
+                      Status
+                    </TableHead>
                     <TableHead className="font-semibold">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" /> Dibuat
                       </div>
                     </TableHead>
-                    <TableHead className="text-center font-semibold min-w-[150px]">
+                    <TableHead className="text-center font-semibold min-w-[180px]">
                       Aksi
                     </TableHead>
                   </TableRow>
@@ -195,6 +286,9 @@ const MateriPage = () => {
                       </TableCell>
                       <TableCell className="font-medium">
                         {item.judul || "-"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {getStatusBadge(item)}
                       </TableCell>
                       <TableCell>
                         <span className="text-sm">
